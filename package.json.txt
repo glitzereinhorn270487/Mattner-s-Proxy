@@ -1,0 +1,16 @@
+{
+  "name": "minimal-api-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "13.4.19"
+  },
+  "devDependencies": {
+    "typescript": "^5.x.x",
+    "@types/node": "^20.x.x"
+  }
