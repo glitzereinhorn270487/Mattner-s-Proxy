@@ -1,38 +1,45 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { tokenAddress } = req.query; 
+  const { tokenAddress } = req.query; // Dies extrahiert den Parameter aus der URL
+  
   if (!tokenAddress || typeof tokenAddress !== 'string') {
     return res.status(400).json({ error: "tokenAddress ist erforderlich und muss ein String sein." });
   }
+
   try {
     const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+
     if (!response.ok) {
       if (response.status === 404) {
         return res.status(404).json({ error: `Keine Dexscreener-Paare für ${tokenAddress} gefunden` });
       }
       const errorText = await response.text();
+      // KORRIGIERTE ZEILE HIER (Zeile 24 war die ursprüngliche, jetzt könnte es eine andere Zeile sein)
       console.error(`Dexscreener API returned non-OK status ${response.status} for ${tokenAddress}: ${errorText}`);
       return res.status(response.status).json({
         error: `Fehler von Dexscreener-API: ${response.status} ${response.statusText}`,
         details: errorText.substring(0, Math.min(errorText.length, 200))
       });
-   }
-const contentType = response.headers.get('content-type');
-if (!contentType || !contentType.includes('application/json')) {
-const responseText = await response.text();
-console.error(Dexscreener API did not return JSON for ${tokenAddress}. Content-Type: ${contentType}. Body start: ${responseText.substring(0, Math.min(responseText.length, 200))});
-return res.status(500).json({
-error: "Dexscreener-API hat kein JSON zurückgegeben. Möglicherweise blockiert.",
-receivedContentType: contentType,
-responseTextSnippet: responseText.substring(0, Math.min(responseText.length, 200))
-});
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await response.text();
+      // KORRIGIERTE ZEILE HIER (Zeile 24 war die ursprüngliche, jetzt könnte es eine andere Zeile sein)
+      console.error(`Dexscreener API did not return JSON for ${tokenAddress}. Content-Type: ${contentType}. Body start: ${responseText.substring(0, Math.min(responseText.length, 200))}`);
+      return res.status(500).json({
+        error: "Dexscreener-API hat kein JSON zurückgegeben. Möglicherweise blockiert.",
+        receivedContentType: contentType,
+        responseTextSnippet: responseText.substring(0, Math.min(responseText.length, 200))
+      });
+    }
+
+    const data = await response.json();
+    res.status(200).json(data);
+
+  } catch (error: any) {
+    console.error(`Interner Fehler im Dexscreener Proxy für ${tokenAddress}:`, error.message);
+    res.status(500).json({ error: "Interner Serverfehler beim Abrufen von Dexscreener-Details", details: error.message });
+  }
 }
-const data = await response.json();
-res.status(200).json(data);
-} catch (error: any) {
-console.error(Interner Fehler im Dexscreener Proxy für ${tokenAddress}:, error.message);
-res.status(500).json({ error: "Interner Serverfehler beim Abrufen von Dexscreener-Details", details: error.message });
-}
-}
-```
